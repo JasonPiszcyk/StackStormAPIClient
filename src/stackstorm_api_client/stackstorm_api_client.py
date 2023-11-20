@@ -12,10 +12,12 @@
 import requests
 import urllib3
 import json
+import time
 
 #
 # Constants
 #
+
 
 
 ###########################################################################
@@ -28,6 +30,8 @@ import json
 #
 class StackStormAPIClient():
     ''' Simple API Client to StackStorm '''
+    ERROR_INVALID_PATH = "404 Client Error: Not Found for url:"
+
     # Attributes
 
     # Private Attributes
@@ -252,6 +256,74 @@ class StackStormAPIClient():
         uri = self.__make_uri(path=path)
 
         return self.__api_get(uri=uri, params=params)
+
+
+    ###########################################################################
+    #
+    # API Helper Methods
+    #
+    ###########################################################################
+    #
+    # wait_for_execution
+    #
+    def get_execution_status(self, id=None):
+        '''
+        Get the status of an execution
+
+        Parameters:
+            id: The Execution ID to query
+
+        Return Value:
+            string: The status of the execution
+        '''
+        if not id:
+            raise ValueError(f"'id' argument must be specified")
+
+        exec_status = "missing"
+        try:
+            resp = self.get(f"/api/v1/executions/{id}")
+        except requests.exceptions.HTTPError as err:
+            if str(err).find(self.ERROR_INVALID_PATH) == -1:
+                raise err
+
+        if "status" in resp:
+            exec_status = resp("status")
+
+        return exec_status
+
+
+    #
+    # wait_for_execution
+    #
+    def wait_for_execution(self, id=None, timeout=0, interval=10):
+        '''
+        A simple DELETE request
+
+        Parameters:
+            id: The Execution ID to wait for
+            timeout: Time in secs to wait before giving up (0 = infinite)
+            interval: Polling interval in seconds
+
+        Return Value:
+            boolean: True if successful, False if failed or timed out
+        '''
+        if not id:
+            raise ValueError(f"'id' argument must be specified")
+        
+        if interval < 1: interval = 1
+        if interval > 300: interval = 300
+
+        elapsed_time = 0
+        while (timeout == 0) or (elapsed_time < timeout):
+            status = self.get_execution_status(id)
+
+            if status == "missing": return False
+            if status == "succeed": return True
+
+            time.sleep(interval)
+            elapsed_time += interval
+        
+        return False
 
 
     ###########################################################################
