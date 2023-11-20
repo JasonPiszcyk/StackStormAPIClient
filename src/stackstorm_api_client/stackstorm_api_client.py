@@ -287,7 +287,7 @@ class StackStormAPIClient():
                 raise err
 
         if "status" in resp:
-            exec_status = resp("status")
+            exec_status = resp["status"]
 
         return exec_status
 
