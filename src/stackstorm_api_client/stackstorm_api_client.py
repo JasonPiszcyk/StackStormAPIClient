@@ -46,16 +46,17 @@ class StackStormAPIClient():
         ''' Init method for class '''
         super().__init__(*args, **kwargs)
 
-        if host: self.__api_host = host
+        host = host if host else self.__api_host
         self.__verify = verify
         if not self.__verify: urllib3.disable_warnings()
 
         if api_key:
             self.__api_host = api_key
+            self.auth(host=host, api_key=api_key)
         elif username or password:
             # Try to login
             self.login(
-                host=self.__api_host,
+                host=host,
                 username=username,
                 password=password,
             )
@@ -79,7 +80,7 @@ class StackStormAPIClient():
             password: Password for user to authenticate to StackStorm
 
         Return Value:
-            bool: True if successful, False otherwise
+            None
         '''
         if not username:
             raise ValueError("'username' argument must be supplied")
@@ -100,6 +101,37 @@ class StackStormAPIClient():
             self.__api_host = api_host
             self.__auth_token = resp_dict["token"]
             self.__authenticated = True
+
+
+    #
+    # auth
+    #
+    def auth(self, host=None, api_key=None):
+        '''
+        Authenticate to the StackStorm API via api_key
+
+        Parameters:
+            host: The host of the StackStorm API
+            api_key: API Key to use
+
+        Return Value:
+            None
+        '''
+        if not api_key:
+            raise ValueError("'api_key' argument must be supplied")
+
+        api_host = host if host else self.__api_host
+        uri = f"https://{api_host}/api/v1"
+        self.__api_key = api_key
+
+        try:
+            resp_dict = self.__api_get(uri=uri)
+        except requests.exceptions.HTTPError:
+            self.__api_key = None
+            return
+
+        self.__api_host = api_host
+        self.__authenticated = True
 
 
     #
@@ -186,20 +218,21 @@ class StackStormAPIClient():
     #
     # post
     #
-    def post(self, path=None, params={}):
+    def post(self, path=None, params={}, body={}):
         '''
         A simple POST request
 
         Parameters:
             path: The API path to query
             params: Query parameters for the request
+            body: The request body
 
         Return Value:
             dict: Response from the query
         '''
         uri = self.__make_uri(path=path)
 
-        return self.__api_post(uri=uri, params=params)
+        return self.__api_post(uri=uri, params=params, body=body)
 
 
     #
@@ -323,13 +356,15 @@ class StackStormAPIClient():
     #
     # __api_post
     #
-    def __api_post(self, uri=None, params={}, username=None, password=None):
+    def __api_post(self, uri=None, params={}, body={},
+                   username=None, password=None):
         '''
         A POST request 
 
         Parameters:
             uri: The URI for the API request
             params: Query parameters for the request
+            body: The request body
             username: Name of user to authenticate to StackStorm
             password: Password for user to authenticate to StackStorm
 
@@ -345,6 +380,7 @@ class StackStormAPIClient():
                 uri,
                 auth=(username, password),
                 params=params,
+                data=json.dumps(body),
                 verify=self.__verify
             )
         else:
@@ -354,6 +390,7 @@ class StackStormAPIClient():
                 uri,
                 headers=headers,
                 params=params,
+                data=json.dumps(body),
                 verify=self.__verify
             )
 
