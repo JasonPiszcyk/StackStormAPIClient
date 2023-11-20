@@ -318,7 +318,7 @@ class StackStormAPIClient():
             status = self.get_execution_status(id)
 
             if status == "missing": return False
-            if status == "succeed": return True
+            if status == "succeeded": return True
 
             time.sleep(interval)
             elapsed_time += interval
