@@ -51,7 +51,7 @@ class StackStormAPIClient():
         if not self.__verify: urllib3.disable_warnings()
 
         if api_key:
-            self.__api_host = api_key
+            self.__api_host = host
             self.auth(host=host, api_key=api_key)
         elif username or password:
             # Try to login
