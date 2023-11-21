@@ -216,7 +216,7 @@ class StackStormAPIClient():
         '''
         uri = self.__make_uri(path=path)
 
-        return self.__api_post(uri=uri, params=params, body=body)
+        return self.__api_put(uri=uri, params=params, body=body)
 
 
     #
@@ -240,9 +240,9 @@ class StackStormAPIClient():
 
 
     #
-    # get
+    # delete
     #
-    def get(self, path=None, params={}):
+    def delete(self, path=None, params={}):
         '''
         A simple DELETE request
 
@@ -255,7 +255,7 @@ class StackStormAPIClient():
         '''
         uri = self.__make_uri(path=path)
 
-        return self.__api_get(uri=uri, params=params)
+        return self.__api_delete(uri=uri, params=params)
 
 
     ###########################################################################
@@ -409,7 +409,10 @@ class StackStormAPIClient():
             raise ValueError("'uri' argument must be supplied")
 
         # Perform the request
-        headers = self.__set_header()
+        headers = {
+             "content-type": "application/json"
+        }
+        headers = self.__set_header(headers)
         req = requests.put(
             uri,
             headers=headers,
@@ -446,18 +449,22 @@ class StackStormAPIClient():
         if not uri:
             raise ValueError("'uri' argument must be supplied")
 
+        headers = {
+            "content-type": "application/json"
+        }
         if username or password:
             # We might be trying to login
             req = requests.post(
                 uri,
                 auth=(username, password),
+                headers=headers,
                 params=params,
                 data=json.dumps(body),
                 verify=self.__verify
             )
         else:
             # Perform the request
-            headers = self.__set_header()
+            headers = self.__set_header(headers)
             req = requests.post(
                 uri,
                 headers=headers,
