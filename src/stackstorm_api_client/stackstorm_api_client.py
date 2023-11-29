@@ -334,7 +334,7 @@ class StackStormAPIClient():
     #
     # __set_header
     #
-    def __set_header(self, headers=None):
+    def __set_header(self, headers={}):
         '''
         Set the request header based on 
 
@@ -344,9 +344,12 @@ class StackStormAPIClient():
         Return Value:
             dict: The header after modification
         '''
-        if not headers:
-            headers = {}
-        
+        headers.update({
+            "Connection": "keep-alive",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "application/json",
+        })
+
         if self.__api_key:
             headers.update({"St2-Api-Key": self.__api_key})
         elif self.__auth_token:
