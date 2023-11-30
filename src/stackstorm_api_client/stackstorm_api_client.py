@@ -36,30 +36,40 @@ class StackStormAPIClient():
     # __init__
     #
     def __init__(self, *args, host=None, api_key=None, username=None,
-                 password=None, verify=True, **kwargs):
+                 password=None, verify=True, validate_api_key=True, **kwargs):
         ''' Init method for class '''
         super().__init__(*args, **kwargs)
 
-        # Set the defaults
-        self._api_host = "localhost"
+        # Set some defaults
         self._auth_token = None
-        self._api_key = None
         self._verify = verify
-        self._authenticated = False
-
-        # Set the host to default or the value provided in arguments
-        # Will override insitance variable if succesful connection
-        host = host if host else self._api_host
 
         # If we don't want to verify the certs, turn off the warnings
         if not self._verify: urllib3.disable_warnings()
 
-        if api_key:
-            self._api_host = host
-            self.auth(host=host, api_key=api_key)
-        elif username or password:
-            # Try to login
-            self.login(host=host, username=username, password=password,)
+        # We can skip the check on the API Key and just try to use it...
+        if api_key and not validate_api_key:
+            # Set the defaults and just store auth info
+            self._api_host = host if host else "localhost"
+            self._api_key = api_key
+            self._authenticated = True
+        else:
+            # Set the defaults and validate the auth info before storing it
+            self._api_host = "localhost"
+            self._api_key = None
+            self._authenticated = False
+
+            # Set the host to default or the value provided in arguments
+            # Will override insitance variable if succesful connection
+            host = host if host else self._api_host
+
+            if api_key:
+                self._api_host = host
+                self.auth(host=host, api_key=api_key)
+            elif username or password:
+                # Try to login
+                self.login(host=host, username=username, password=password,)
+
 
 
     ###########################################################################

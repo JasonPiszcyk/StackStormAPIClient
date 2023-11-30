@@ -57,6 +57,22 @@ if "credentials" in st2cfg:
         password = st2cfg["credentials"]["password"]
 
 
+def test_without_auth_validation():
+    # Correct API Key
+    st2 = stackstorm_api_client.StackStormAPIClient(host=api_host, api_key=api_key, verify=False, validate_api_key=False)
+    assert st2.authenticated()
+
+    x =  st2.get("/api/v1") 
+    assert str(x["version"]) == "3.8.0"
+
+    # Wrong API Key
+    st2 = stackstorm_api_client.StackStormAPIClient(host=api_host, api_key="junk", verify=False, validate_api_key=False)
+    assert st2.authenticated()
+
+    x =  st2.get("/api/v1") 
+    assert str(x["version"]) != "3.8.0"
+
+
 def test_user_password():
     # Invalid password
     st2 = stackstorm_api_client.StackStormAPIClient(host=api_host, username=username, password="invalid", verify=False)
@@ -76,7 +92,7 @@ def test_api_key():
     st2 = stackstorm_api_client.StackStormAPIClient(host=api_host, api_key="junk", verify=False)
     assert not st2.authenticated()
 
-    # Correct username and password
+    # Correct API Key
     st2 = stackstorm_api_client.StackStormAPIClient(host=api_host, api_key=api_key, verify=False)
     assert st2.authenticated()
 
