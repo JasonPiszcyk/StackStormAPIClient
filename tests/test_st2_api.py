@@ -69,8 +69,8 @@ def test_without_auth_validation():
     st2 = stackstorm_api_client.StackStormAPIClient(host=api_host, api_key="junk", verify=False, validate_api_key=False)
     assert st2.authenticated()
 
-    x =  st2.get("/api/v1") 
-    assert str(x["version"]) != "3.8.0"
+    with pytest.raises(requests.exceptions.HTTPError):
+        x =  st2.get("/api/v1") 
 
 
 def test_user_password():
