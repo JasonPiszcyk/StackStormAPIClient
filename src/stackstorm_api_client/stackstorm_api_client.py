@@ -35,28 +35,38 @@ class StackStormAPIClient():
     #
     # __init__
     #
-    def __init__(self, *args, host=None, api_key=None, username=None,
-                 password=None, verify=True, validate_api_key=True, **kwargs):
+    def __init__(self, *args, host=None, api_key=None, auth_token=None,
+                 username=None, password=None, verify=True,
+                 validate_api_key=True, **kwargs):
         ''' Init method for class '''
         super().__init__(*args, **kwargs)
 
-        # Set some defaults
-        self._auth_token = None
-        self._verify = verify
-
         # If we don't want to verify the certs, turn off the warnings
+        self._verify = verify
         if not self._verify: urllib3.disable_warnings()
 
-        # We can skip the check on the API Key and just try to use it...
         if api_key and not validate_api_key:
-            # Set the defaults and just store auth info
+            # We can skip the check on the API Key and just try to use it...
+            # Used for once off requests, saves doing 2 calls to API for one response
+            # We will fail on API request if API key is invalid
+            # Set the defaults and just store api key
             self._api_host = host if host else "localhost"
             self._api_key = api_key
+            self._auth_token = None
+            self._authenticated = True
+        elif auth_token:
+            # If we are provided with an Auth Token, assume it is correct
+            # We will fail on API request if Auth Token is invalid
+            # Login process done elsewhere (eg we are called from a stackstorm action)
+            self._api_host = host if host else "localhost"
+            self._api_key = None
+            self._auth_token = auth_token
             self._authenticated = True
         else:
             # Set the defaults and validate the auth info before storing it
             self._api_host = "localhost"
             self._api_key = None
+            self._auth_token = None
             self._authenticated = False
 
             # Set the host to default or the value provided in arguments
@@ -376,7 +386,7 @@ class StackStormAPIClient():
             params: Query parameters for the request
 
         Return Value:
-            dict: Response converted to a dictionary
+            object: Response converted to the response data type
         '''
         if not uri:
             raise ValueError("'uri' argument must be supplied")
@@ -394,8 +404,8 @@ class StackStormAPIClient():
         req.raise_for_status()
 
         # Return the info from the request
-        req_dict = json.loads(req.text)
-        return req_dict
+        req_data = json.loads(req.text)
+        return req_data
 
 
     #
@@ -453,7 +463,7 @@ class StackStormAPIClient():
             password: Password for user to authenticate to StackStorm
 
         Return Value:
-            dict: The response as a dictionary
+            object: Response converted to the response data type
         '''
         if not uri:
             raise ValueError("'uri' argument must be supplied")
@@ -486,8 +496,8 @@ class StackStormAPIClient():
         req.raise_for_status()
 
         # The request went through OK
-        req_dict = json.loads(req.text)
-        return req_dict
+        req_data = json.loads(req.text)
+        return req_data
 
 
     #
