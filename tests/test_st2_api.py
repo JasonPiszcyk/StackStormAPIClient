@@ -23,7 +23,7 @@ import configparser
 #
 # Globals
 #
-ST2_CFG_FILE = "st2_config"
+ST2_CFG_FILE = "/tmp/st2_config"
 
 ###########################################################################
 #
