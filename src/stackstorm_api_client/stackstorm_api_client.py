@@ -19,7 +19,6 @@ import time
 #
 
 
-
 ###########################################################################
 #
 # StackStormAPIClient Class
@@ -32,15 +31,6 @@ class StackStormAPIClient():
     ''' Simple API Client to StackStorm '''
     ERROR_INVALID_PATH = "404 Client Error: Not Found for url:"
 
-    # Attributes
-
-    # Private Attributes
-    __api_host = "localhost"
-    __auth_token = None
-    __api_key = None
-    __verify = True
-    __authenticated = False
-
 
     #
     # __init__
@@ -50,20 +40,26 @@ class StackStormAPIClient():
         ''' Init method for class '''
         super().__init__(*args, **kwargs)
 
-        host = host if host else self.__api_host
-        self.__verify = verify
-        if not self.__verify: urllib3.disable_warnings()
+        # Set the defaults
+        self._api_host = "localhost"
+        self._auth_token = None
+        self._api_key = None
+        self._verify = verify
+        self._authenticated = False
+
+        # Set the host to default or the value provided in arguments
+        # Will override insitance variable if succesful connection
+        host = host if host else self._api_host
+
+        # If we don't want to verify the certs, turn off the warnings
+        if not self._verify: urllib3.disable_warnings()
 
         if api_key:
-            self.__api_host = host
+            self._api_host = host
             self.auth(host=host, api_key=api_key)
         elif username or password:
             # Try to login
-            self.login(
-                host=host,
-                username=username,
-                password=password,
-            )
+            self.login(host=host, username=username, password=password,)
 
 
     ###########################################################################
@@ -92,19 +88,19 @@ class StackStormAPIClient():
         if not password:
             raise ValueError("'password' argument must be supplied")
 
-        api_host = host if host else self.__api_host
+        api_host = host if host else self._api_host
         uri = f"https://{api_host}/auth/v1/tokens"
 
         try:
-            resp_dict = self.__api_post(uri=uri, username=username, password=password)
+            resp_dict = self._api_post(uri=uri, username=username, password=password)
         except requests.exceptions.HTTPError:
             return
 
         if "token" in resp_dict:
             # Store the host/login info
-            self.__api_host = api_host
-            self.__auth_token = resp_dict["token"]
-            self.__authenticated = True
+            self._api_host = api_host
+            self._auth_token = resp_dict["token"]
+            self._authenticated = True
 
 
     #
@@ -124,18 +120,18 @@ class StackStormAPIClient():
         if not api_key:
             raise ValueError("'api_key' argument must be supplied")
 
-        api_host = host if host else self.__api_host
+        api_host = host if host else self._api_host
         uri = f"https://{api_host}/api/v1"
-        self.__api_key = api_key
+        self._api_key = api_key
 
         try:
-            resp_dict = self.__api_get(uri=uri)
+            resp_dict = self._api_get(uri=uri)
         except requests.exceptions.HTTPError:
-            self.__api_key = None
+            self._api_key = None
             return
 
-        self.__api_host = api_host
-        self.__authenticated = True
+        self._api_host = api_host
+        self._authenticated = True
 
 
     #
@@ -151,7 +147,7 @@ class StackStormAPIClient():
         Return Value:
             bool: True if successful, False otherwise
         '''
-        return self.__authenticated
+        return self._authenticated
 
 
     ###########################################################################
@@ -160,9 +156,9 @@ class StackStormAPIClient():
     #
     ###########################################################################
     #
-    # __make_uri
+    # _make_uri
     #
-    def __make_uri(self, path=None):
+    def _make_uri(self, path=None):
         '''
         Generate a URI from info
 
@@ -175,7 +171,7 @@ class StackStormAPIClient():
         if not path:
             path = "/"
         
-        uri = f"https://{self.__api_host}{path}"
+        uri = f"https://{self._api_host}{path}"
         
         return uri
 
@@ -194,9 +190,9 @@ class StackStormAPIClient():
         Return Value:
             dict: Response from the request
         '''
-        uri = self.__make_uri(path=path)
+        uri = self._make_uri(path=path)
 
-        return self.__api_get(uri=uri, params=params)
+        return self._api_get(uri=uri, params=params)
 
 
     #
@@ -214,9 +210,9 @@ class StackStormAPIClient():
         Return Value:
             boolean: True if successful, False or exception otherwise
         '''
-        uri = self.__make_uri(path=path)
+        uri = self._make_uri(path=path)
 
-        return self.__api_put(uri=uri, params=params, body=body)
+        return self._api_put(uri=uri, params=params, body=body)
 
 
     #
@@ -234,9 +230,9 @@ class StackStormAPIClient():
         Return Value:
             dict: Response from the query
         '''
-        uri = self.__make_uri(path=path)
+        uri = self._make_uri(path=path)
 
-        return self.__api_post(uri=uri, params=params, body=body)
+        return self._api_post(uri=uri, params=params, body=body)
 
 
     #
@@ -253,9 +249,9 @@ class StackStormAPIClient():
         Return Value:
             boolean: True if successful, False or exception otherwise
         '''
-        uri = self.__make_uri(path=path)
+        uri = self._make_uri(path=path)
 
-        return self.__api_delete(uri=uri, params=params)
+        return self._api_delete(uri=uri, params=params)
 
 
     ###########################################################################
@@ -332,9 +328,9 @@ class StackStormAPIClient():
     #
     ###########################################################################
     #
-    # __set_header
+    # _set_headers
     #
-    def __set_header(self, headers={}):
+    def _set_headers(self, headers={}):
         '''
         Set the request header based on 
 
@@ -350,18 +346,18 @@ class StackStormAPIClient():
             "Accept": "application/json",
         })
 
-        if self.__api_key:
-            headers.update({"St2-Api-Key": self.__api_key})
-        elif self.__auth_token:
-            headers.update({"X-Auth-Token": self.__auth_token})
+        if self._api_key:
+            headers.update({"St2-Api-Key": self._api_key})
+        elif self._auth_token:
+            headers.update({"X-Auth-Token": self._auth_token})
         
         return headers
 
 
     #
-    # __api_get
+    # _api_get
     #
-    def __api_get(self, uri=None, params={}):
+    def _api_get(self, uri=None, params={}):
         '''
         A GET request
 
@@ -376,12 +372,12 @@ class StackStormAPIClient():
             raise ValueError("'uri' argument must be supplied")
 
         # Perform the request
-        headers = self.__set_header()
+        headers = self._set_headers()
         req = requests.get(
             uri,
             headers=headers,
             params=params,
-            verify=self.__verify
+            verify=self._verify
         )
 
         # Raise an exception if the request failed
@@ -393,9 +389,9 @@ class StackStormAPIClient():
 
 
     #
-    # __api_put
+    # _api_put
     #
-    def __api_put(self, uri=None, params={}, body={}):
+    def _api_put(self, uri=None, params={}, body={}):
         '''
         A PUT request
 
@@ -415,13 +411,13 @@ class StackStormAPIClient():
         headers = {
              "content-type": "application/json"
         }
-        headers = self.__set_header(headers)
+        headers = self._set_headers(headers)
         req = requests.put(
             uri,
             headers=headers,
             params=params,
             data=json.dumps(body),
-            verify=self.__verify
+            verify=self._verify
         )
 
         # Raise an exception if the request failed
@@ -432,9 +428,9 @@ class StackStormAPIClient():
 
 
     #
-    # __api_post
+    # _api_post
     #
-    def __api_post(self, uri=None, params={}, body={},
+    def _api_post(self, uri=None, params={}, body={},
                    username=None, password=None):
         '''
         A POST request 
@@ -463,17 +459,17 @@ class StackStormAPIClient():
                 headers=headers,
                 params=params,
                 data=json.dumps(body),
-                verify=self.__verify
+                verify=self._verify
             )
         else:
             # Perform the request
-            headers = self.__set_header(headers)
+            headers = self._set_headers(headers)
             req = requests.post(
                 uri,
                 headers=headers,
                 params=params,
                 data=json.dumps(body),
-                verify=self.__verify
+                verify=self._verify
             )
 
         # Raise an exception if the request failed
@@ -485,9 +481,9 @@ class StackStormAPIClient():
 
 
     #
-    # __api_delete
+    # _api_delete
     #
-    def __api_delete(self, uri=None, params={}):
+    def _api_delete(self, uri=None, params={}):
         '''
         A DELETE request
 
@@ -502,12 +498,12 @@ class StackStormAPIClient():
             raise ValueError("'uri' argument must be supplied")
 
         # Perform the request
-        headers = self.__set_header()
+        headers = self._set_headers()
         req = requests.delete(
             uri,
             headers=headers,
             params=params,
-            verify=self.__verify
+            verify=self._verify
         )
 
         # Raise an exception if the request failed
