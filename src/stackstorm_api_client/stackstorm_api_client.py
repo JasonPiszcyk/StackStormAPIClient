@@ -343,6 +343,35 @@ class StackStormAPIClient():
         return False
 
 
+    #
+    # get_execution_result
+    #
+    def get_execution_result(self, id=None):
+        '''
+        Get the result of an execution
+
+        Parameters:
+            id: The Execution ID to query
+
+        Return Value:
+            string: The result of the execution
+        '''
+        if not id:
+            raise ValueError(f"'id' argument must be specified")
+
+        exec_status = "missing"
+        try:
+            resp = self.get(f"/api/v1/executions/{id}")
+        except requests.exceptions.HTTPError as err:
+            if str(err).find(self.ERROR_INVALID_PATH) == -1:
+                raise err
+
+        if "result" in resp:
+            result = resp["result"]
+
+        return result
+
+
     ###########################################################################
     #
     # API Access Functions
