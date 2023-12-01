@@ -280,7 +280,7 @@ class StackStormAPIClient():
     #
     ###########################################################################
     #
-    # wait_for_execution
+    # get_execution_status
     #
     def get_execution_status(self, id=None):
         '''
@@ -334,6 +334,7 @@ class StackStormAPIClient():
             status = self.get_execution_status(id)
 
             if status == "missing": return False
+            if status == "failed": return False
             if status == "succeeded": return True
 
             time.sleep(interval)
