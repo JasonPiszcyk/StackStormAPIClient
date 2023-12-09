@@ -14,6 +14,8 @@ import urllib3
 import json
 import time
 
+from threading import Lock
+
 #
 # Constants
 #
@@ -30,6 +32,9 @@ import time
 class StackStormAPIClient():
     ''' Simple API Client to StackStorm '''
     ERROR_INVALID_PATH = "404 Client Error: Not Found for url:"
+
+    # Private Class Attributes
+    __lock = Lock()
 
 
     #
@@ -118,9 +123,11 @@ class StackStormAPIClient():
 
         if "token" in resp_dict:
             # Store the host/login info
+            StackStormAPIClient.__lock.acquire()
             self._api_host = api_host
             self._auth_token = resp_dict["token"]
             self._authenticated = True
+            StackStormAPIClient.__lock.release()
 
 
     #
@@ -142,7 +149,9 @@ class StackStormAPIClient():
 
         api_host = host if host else self._api_host
         uri = f"https://{api_host}/api/v1"
+        StackStormAPIClient.__lock.acquire()
         self._api_key = api_key
+        StackStormAPIClient.__lock.release()
 
         try:
             resp_dict = self._api_get(uri=uri)
@@ -150,8 +159,10 @@ class StackStormAPIClient():
             self._api_key = None
             return
 
+        StackStormAPIClient.__lock.acquire()
         self._api_host = api_host
         self._authenticated = True
+        StackStormAPIClient.__lock.release()
 
 
     #
