@@ -41,8 +41,8 @@ class StackStormAPIClient():
     # __init__
     #
     def __init__(self, *args, host=None, api_key=None, auth_token=None,
-                 username=None, password=None, verify=True,
-                 validate_api_key=True, **kwargs):
+                username=None, password=None, verify=True,
+                validate_api_key=True, **kwargs):
         ''' Init method for class '''
         super().__init__(*args, **kwargs)
 
@@ -470,7 +470,7 @@ class StackStormAPIClient():
 
         # Perform the request
         headers = {
-             "content-type": "application/json"
+            "content-type": "application/json"
         }
         headers = self._set_headers(headers)
         req = requests.put(
