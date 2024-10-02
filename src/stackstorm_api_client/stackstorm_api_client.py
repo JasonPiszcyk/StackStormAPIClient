@@ -40,7 +40,7 @@ class StackStormAPIClient():
     #
     # __init__
     #
-    def __init__(self, *args, host=None, api_key=None, auth_token=None,
+    def __init__(self, *args, uri=None, api_key=None, auth_token=None,
                 username=None, password=None, verify=True,
                 validate_api_key=True, **kwargs):
         ''' Init method for class '''
@@ -55,7 +55,7 @@ class StackStormAPIClient():
             # Used for once off requests, saves doing 2 calls to API for one response
             # We will fail on API request if API key is invalid
             # Set the defaults and just store api key
-            self._api_host = host if host else "localhost"
+            self._api_uri = uri if uri else "https://localhost"
             self._api_key = api_key
             self._auth_token = None
             self._authenticated = True
@@ -63,27 +63,27 @@ class StackStormAPIClient():
             # If we are provided with an Auth Token, assume it is correct
             # We will fail on API request if Auth Token is invalid
             # Login process done elsewhere (eg we are called from a stackstorm action)
-            self._api_host = host if host else "localhost"
+            self._api_uri = uri if uri else "https://localhost"
             self._api_key = None
             self._auth_token = auth_token
             self._authenticated = True
         else:
             # Set the defaults and validate the auth info before storing it
-            self._api_host = "localhost"
+            self._api_uri = "https://localhost"
             self._api_key = None
             self._auth_token = None
             self._authenticated = False
 
             # Set the host to default or the value provided in arguments
-            # Will override insitance variable if succesful connection
-            host = host if host else self._api_host
+            # Will override instance variable if succesful connection
+            _conn_uri = uri if uri else self._api_uri
 
             if api_key:
-                self._api_host = host
-                self.auth(host=host, api_key=api_key)
+                self._api_uri = _conn_uri
+                self.auth(uri=_conn_uri, api_key=api_key)
             elif username or password:
                 # Try to login
-                self.login(host=host, username=username, password=password,)
+                self.login(uri=_conn_uri, username=username, password=password,)
 
 
 
@@ -95,12 +95,12 @@ class StackStormAPIClient():
     #
     # login
     #
-    def login(self, host=None, username=None, password=None):
+    def login(self, uri=None, username=None, password=None):
         '''
         Login to the StackStorm API
 
         Parameters:
-            host: The host of the StackStorm API
+            uri: The URI of the StackStorm API
             username: Name of user to authenticate to StackStorm
             password: Password for user to authenticate to StackStorm
 
@@ -113,18 +113,18 @@ class StackStormAPIClient():
         if not password:
             raise ValueError("'password' argument must be supplied")
 
-        api_host = host if host else self._api_host
-        uri = f"https://{api_host}/auth/v1/tokens"
+        _api_uri = uri if uri else self._api_uri
+        _full_uri = f"{_api_uri}/auth/v1/tokens"
 
         try:
-            resp_dict = self._api_post(uri=uri, username=username, password=password)
+            resp_dict = self._api_post(uri=_full_uri, username=username, password=password)
         except requests.exceptions.HTTPError:
             return
 
         if "token" in resp_dict:
             # Store the host/login info
             StackStormAPIClient.__lock.acquire()
-            self._api_host = api_host
+            self._api_uri = _api_uri
             self._auth_token = resp_dict["token"]
             self._authenticated = True
             StackStormAPIClient.__lock.release()
@@ -133,12 +133,12 @@ class StackStormAPIClient():
     #
     # auth
     #
-    def auth(self, host=None, api_key=None):
+    def auth(self, uri=None, api_key=None):
         '''
         Authenticate to the StackStorm API via api_key
 
         Parameters:
-            host: The host of the StackStorm API
+            uri: The URI of the StackStorm API
             api_key: API Key to use
 
         Return Value:
@@ -147,20 +147,20 @@ class StackStormAPIClient():
         if not api_key:
             raise ValueError("'api_key' argument must be supplied")
 
-        api_host = host if host else self._api_host
-        uri = f"https://{api_host}/api/v1"
+        _api_uri = uri if uri else self._api_uri
+        _full_uri = f"{_api_uri}/api/v1"
         StackStormAPIClient.__lock.acquire()
         self._api_key = api_key
         StackStormAPIClient.__lock.release()
 
         try:
-            resp_dict = self._api_get(uri=uri)
+            resp_dict = self._api_get(uri=_full_uri)
         except requests.exceptions.HTTPError:
             self._api_key = None
             return
 
         StackStormAPIClient.__lock.acquire()
-        self._api_host = api_host
+        self._api_uri = _api_uri
         self._authenticated = True
         StackStormAPIClient.__lock.release()
 
@@ -202,7 +202,7 @@ class StackStormAPIClient():
         if not path:
             path = "/"
         
-        uri = f"https://{self._api_host}{path}"
+        uri = f"{self._api_uri}{path}"
         
         return uri
 
