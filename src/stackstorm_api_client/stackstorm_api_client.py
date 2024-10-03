@@ -41,7 +41,7 @@ class StackStormAPIClient():
     # __init__
     #
     def __init__(self, *args, uri=None, api_key=None, auth_token=None,
-                username=None, password=None, verify=True,
+                username=None, password=None, verify=True, use_path_prefix=True,
                 validate_api_key=True, **kwargs):
         ''' Init method for class '''
         super().__init__(*args, **kwargs)
@@ -49,6 +49,9 @@ class StackStormAPIClient():
         # If we don't want to verify the certs, turn off the warnings
         self._verify = verify
         if not self._verify: urllib3.disable_warnings()
+
+        # Whether to prepend the path prefix or not...
+        self.use_path_prefix = use_path_prefix
 
         if api_key and not validate_api_key:
             # We can skip the check on the API Key and just try to use it...
@@ -114,10 +117,10 @@ class StackStormAPIClient():
             raise ValueError("'password' argument must be supplied")
 
         _api_uri = uri if uri else self._api_uri
-        _full_uri = f"{_api_uri}/auth/v1/tokens"
+        _full_path = f"{_api_uri}/auth/v1/tokens"
 
         try:
-            resp_dict = self._api_post(uri=_full_uri, username=username, password=password)
+            resp_dict = self._api_post(uri=_full_path, username=username, password=password)
         except requests.exceptions.HTTPError:
             return
 
@@ -148,13 +151,17 @@ class StackStormAPIClient():
             raise ValueError("'api_key' argument must be supplied")
 
         _api_uri = uri if uri else self._api_uri
-        _full_uri = f"{_api_uri}/api/v1"
+        if self.use_path_prefix:
+            _full_path = f"{_api_uri}/api/v1"
+        else:
+            _full_path = f"{_api_uri}/v1"
+
         StackStormAPIClient.__lock.acquire()
         self._api_key = api_key
         StackStormAPIClient.__lock.release()
 
         try:
-            resp_dict = self._api_get(uri=_full_uri)
+            resp_dict = self._api_get(uri=_full_path)
         except requests.exceptions.HTTPError:
             self._api_key = None
             return
