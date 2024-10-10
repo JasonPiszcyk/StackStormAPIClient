@@ -50,8 +50,11 @@ class StackStormAPIClient():
         self._verify = verify
         if not self._verify: urllib3.disable_warnings()
 
-        # Whether to prepend the path prefix or not...
-        self.use_path_prefix = use_path_prefix
+        # Creat the path prefeix based on whether to include 'API' or not
+        if use_path_prefix:
+            self.path_prefix = "/api/v1"
+        else:
+            self.path_prefix = "/v1"
 
         if api_key and not validate_api_key:
             # We can skip the check on the API Key and just try to use it...
@@ -151,10 +154,7 @@ class StackStormAPIClient():
             raise ValueError("'api_key' argument must be supplied")
 
         _api_uri = uri if uri else self._api_uri
-        if self.use_path_prefix:
-            _full_path = f"{_api_uri}/api/v1"
-        else:
-            _full_path = f"{_api_uri}/v1"
+        _full_path = f"{_api_uri}{self.path_prefix}"
 
         StackStormAPIClient.__lock.acquire()
         self._api_key = api_key
@@ -316,7 +316,7 @@ class StackStormAPIClient():
         exec_status = "missing"
         resp = None
         try:
-            resp = self.get(f"/api/v1/executions/{id}")
+            resp = self.get(f"{self.path_prefix}/executions/{id}")
         except requests.exceptions.HTTPError as err:
             if str(err).find(self.ERROR_INVALID_PATH) == -1:
                 raise err
@@ -332,7 +332,7 @@ class StackStormAPIClient():
     #
     def wait_for_execution(self, id=None, timeout=0, interval=10):
         '''
-        A simple DELETE request
+        Wait for an execution to complete
 
         Parameters:
             id: The Execution ID to wait for
@@ -380,7 +380,7 @@ class StackStormAPIClient():
 
         exec_status = "missing"
         try:
-            resp = self.get(f"/api/v1/executions/{id}")
+            resp = self.get(f"{self.path_prefix}/executions/{id}")
         except requests.exceptions.HTTPError as err:
             if str(err).find(self.ERROR_INVALID_PATH) == -1:
                 raise err
