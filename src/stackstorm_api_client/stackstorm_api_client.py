@@ -314,13 +314,14 @@ class StackStormAPIClient():
             raise ValueError(f"'id' argument must be specified")
 
         exec_status = "missing"
+        resp = None
         try:
             resp = self.get(f"/api/v1/executions/{id}")
         except requests.exceptions.HTTPError as err:
             if str(err).find(self.ERROR_INVALID_PATH) == -1:
                 raise err
 
-        if "status" in resp:
+        if resp and "status" in resp:
             exec_status = resp["status"]
 
         return exec_status
