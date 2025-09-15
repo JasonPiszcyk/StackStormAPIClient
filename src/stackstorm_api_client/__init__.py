@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 '''
-* __init__.py
-*
-* Copyright (c) 2023 Iocane Pty Ltd
-*
-* @author: Jason Piszcyk
-*
-* Module initialisation
-*
-'''
-__all__ = [ "StackStormAPIClient", "ST2_Response" ]
+Module initialisation
 
-from stackstorm_api_client import StackStormAPIClient, ST2_Response
+Copyright (C) 2025 Jason Piszcyk
+Email: Jason.Piszcyk@gmail.com
+
+All rights reserved.
+
+This software is private and may NOT be copied, distributed, reverse engineered,
+decompiled, or modified without the express written permission of the copyright
+holder.
+
+The copyright holder makes no warranties, express or implied, about its 
+suitability for any particular purpose.
+'''
