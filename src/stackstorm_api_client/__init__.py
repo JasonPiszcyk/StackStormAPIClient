@@ -15,7 +15,9 @@ The copyright holder makes no warranties, express or implied, about its
 suitability for any particular purpose.
 '''
 __all__ = [
-    "stackstorm_api_client",
+    "StackStormAPIClient",
+    "ST2_Response",
 ]
 
-from stackstorm_api_client import stackstorm_api_client
+from stackstorm_api_client.stackstorm_api_client import StackStormAPIClient
+from stackstorm_api_client.stackstorm_api_client import ST2_Response
