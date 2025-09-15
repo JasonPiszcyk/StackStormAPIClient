@@ -1,4 +1,4 @@
 # StackStorm API Client
-Copyright (c) 2023 Jason Piszcyk
+Copyright (c) 2025 Jason Piszcyk
 
 Simple client to the StackStorm API
