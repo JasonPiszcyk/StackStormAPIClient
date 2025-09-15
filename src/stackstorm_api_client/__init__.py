@@ -9,6 +9,6 @@
 * Module initialisation
 *
 '''
-__all__ = [ "StackStormAPIClient" ]
+__all__ = [ "StackStormAPIClient", "ST2_Response" ]
 
-from .stackstorm_api_client import StackStormAPIClient
+from stackstorm_api_client import StackStormAPIClient, ST2_Response

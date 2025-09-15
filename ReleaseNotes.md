@@ -1,9 +1,10 @@
 # StackStom API Client
 ## Release Notes
 
-__Version 1.2.0__
-Released: 2025-XX-YY
+__Version 2.0.1__
+Released: 2025-09-15
 * Update with Python typing hints
 * Change 'authenticated' to property from function
+* Fix Init
 
 __Previous releases were early development versions__
