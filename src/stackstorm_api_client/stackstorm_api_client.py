@@ -573,15 +573,7 @@ class StackStormAPIClient():
         Raises:
             None
         '''
-        if (
-            isinstance(response, dict) or
-            isinstance(response, list) or
-            isinstance(response, tuple) or
-            isinstance(response, bool) or
-            isinstance(response, int) or
-            isinstance(response, float) or
-            isinstance(response, str)
-        ):
+        if isinstance(response, (dict, list, tuple, bool, int, float, str)):
             return response
 
         # Unknown type (or possibly None)
