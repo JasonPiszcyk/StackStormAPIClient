@@ -14,3 +14,8 @@ holder.
 The copyright holder makes no warranties, express or implied, about its 
 suitability for any particular purpose.
 '''
+__all__ = [
+    "stackstorm_api_client",
+]
+
+from stackstorm_api_client import stackstorm_api_client
